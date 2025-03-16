@@ -1,0 +1,129 @@
+---
+title: "Google Search Trends for 'Actuary'" 
+subtitle: "Coursework 1" 
+author: "Palak Kapoor" 
+date: "Spring term 2025" 
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab 
+    highlight: tango
+---
+ 
+```{r, echo=FALSE}
+# This code will display the QMUL logo at the top right of the page
+# Do not change this code
+htmltools::img(src = knitr::image_uri("images/QMlogo.png"),
+               alt = 'logo',
+               style = 'position:absolute; top:0; right:0; padding:10px; width:20%;')
+```
+
+# Introduction
+
+In this report, I analyze daily Google search trends for the term **"Actuary"** over the past five years in the United Kingdom. The purpose of this project is to explore public interest in the actuarial profession using data visualization and time series forecasting. I downloaded the data from Google Trends and applied the Prophet model to predict future trends. Additionally, I performed a simple linear regression to understand the overall growth trend. This work reflects my practical skills in data analysis and forecasting, which are essential in the actuarial field.
+
+# Data Preparation
+
+The dataset was downloaded from Google Trends and saved as **actuary_trends.csv** in the **data** folder. It contains two columns:
+- **Date** (in d-m-y format)
+- **SearchInterest**
+
+Note: I installed and used the necessary packages (tidyverse, lubridate, and prophet) in my R session; these commands are not included in this document.
+
+Below is the R code used to load and prepare the data:
+
+```{r}
+library(tidyverse)
+library(lubridate)
+
+# Here we will load the CSV file from the data folder
+actuary <- read_csv("data/actuary_trends.csv")
+
+# To Rename the columns: 'Date' becomes 'ds' and 'SearchInterest' becomes 'y'
+# And to Convert the 'ds' column from d-m-y format to a Date object using dmy()
+actuary <- actuary %>% 
+  rename(ds = Date, y = SearchInterest) %>% 
+  mutate(ds = dmy(ds))
+
+# To Display the first few rows to verify the conversion
+head(actuary)
+
+
+```
+
+
+# Data Visualisation
+
+The following plot displays the trend in Google search interest for "Actuary" over time. This visualization helps to identify overall trends and any seasonal patterns with an image that further illustrates the data trend.
+
+```{r}
+library(ggplot2)
+ggplot(actuary, aes(x = ds, y = y)) +
+  geom_line(color = "blue") +
+  labs(title = "Google Search Trends for 'Actuary'",
+       x = "Date",
+       y = "Search Interest (0-100)") +
+  theme_minimal()
+
+```
+For more details on the data, please view the Actuary Search Trends in the UK Past 5 Years by clicking below
+<https://trends.google.com/trends/explore?date=now%207-y&geo=GB&q=Actuary>
+
+Below are some images from Google trends that further illustrates the Interest over Time and Subregion:
+![Interest Over Time](images/GoogleTrends_Interest_Over_Time.jpg){width=50%}
+
+
+![Interest Over Subregion](images/GoogleTrends_Interest_Over_Subregion.jpg){width=50%}
+
+
+# Forecasting with Prophet
+
+To forecast future search interest, I applied the Prophet model to the historical data. The following code fits the model and generates a forecast for the next 30 days.
+
+
+```{r}
+
+library(prophet)
+
+# Fitting the Prophet model on the actuary data
+model <- prophet(actuary)
+
+# To Create a future dataframe for the next 30 days
+future <- make_future_dataframe(model, periods = 30, freq = "day")
+
+# To Generate the forecast
+forecast <- predict(model, future)
+
+# To Plot the forecast
+plot(model, forecast)
+
+#To Plot Forecast Components(trend,seasonality etc)
+prophet_plot_components(model, forecast)
+```
+#Additional Analysis
+To further understand the growth trend in search interest, I ran a simple linear regression. Since dates cannot be directly used in regression, I converted the date to numeric (days since the first date):
+
+```{r}
+# Convert date to numeric (number of days since the first observation)
+actuary <- actuary %>% 
+  mutate(days = as.numeric(ds - min(ds)))
+
+# Run a simple linear regression on the growth of search interest over time
+growth_model <- lm(y ~ days, data = actuary)
+summary(growth_model)
+
+
+```
+This regression helps to quantify the average increase (or decrease) in search interest per day.
+
+# Conclusion
+
+This analysis demonstrates how Google search trends for "Actuary" can be used to gauge public interest over time. The data visualization reveals clear trends and seasonal patterns, while the Prophet model forecasts future search interest. Additionally, the linear regression analysis provides insight into the overall growth trend. These findings are valuable for understanding shifts in career interest within the actuarial field.
+
+
+# References
+
+Google Trends: <https://trends.google.com>
+
+Prophet Documentation: <https://facebook.github.io/prophet/docs/quick_start.html>
